@@ -1,0 +1,14 @@
+program plotter_p;
+
+uses
+  Vcl.Forms,
+  plotter_u in 'plotter_u.pas' {frmMain};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TfrmMain, frmMain);
+  Application.Run;
+end.
