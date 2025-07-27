@@ -130,7 +130,11 @@
             <Form>frmMain</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="other_u.pas"/>
+        <DCCReference Include="utils_u.pas"/>
+        <DCCReference Include="main_menu_u.pas">
+            <Form>Form1</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

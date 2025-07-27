@@ -1,0 +1,217 @@
+unit plotter_u;
+
+interface
+
+uses
+	Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+	System.Classes, Vcl.Graphics,
+	Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, utils_u, Math, Vcl.StdCtrls,
+  main_menu_u;
+
+type
+	TfrmMain = class(TForm)
+		Display: TImage;
+    pnlEquationFormat: TPanel;
+    lblBase: TLabel;
+    btnAdd: TButton;
+    cmbComponent: TComboBox;
+    pnlConstant: TPanel;
+    btnCloseConst: TButton;
+    btnSelectConst: TButton;
+    Edit1: TEdit;
+    pnlFunction: TPanel;
+    btnCloseFunction: TButton;
+    btnSelectFunction: TButton;
+    cmbFunction: TComboBox;
+    pnlOperator: TPanel;
+    btnCloseOperator: TButton;
+    btnSelectOperator: TButton;
+    cmbOperator: TComboBox;
+    pnlVariable: TPanel;
+    lblVariable: TLabel;
+    btnCloseVar: TButton;
+    btnSelectVar: TButton;
+    pnlStorage: TPanel;
+    btnClose: TButton;
+		procedure Main(Sender: TObject);
+		procedure plot_graph;
+    procedure create_graph_ui(Sender: TObject);
+    procedure destroy_graph_ui(Sender: TObject);
+	private
+		{ Private declarations }
+	public
+		{ Public declarations }
+	end;
+
+var
+	frmMain: TfrmMain;
+  addBtn: TButton;
+  graphList: TList;
+  EquationPanel: TPanel;
+  Equations: Integer;
+
+const
+	DW = 1200;
+	DH = 1080;
+  SCALE = 6;
+
+
+implementation
+
+{$R *.dfm}
+
+type
+  TGraph = record
+    func: TFunc<Double, Double>;
+    color: TColor;
+    min, max: Double;
+  end;
+
+
+procedure TfrmMain.create_graph_ui;
+var
+	test: TButton;
+	g: ^TGraph;
+begin
+  New(g);
+  var rand := math.RandomRange(-100,100) / 100;
+   g.func := function(x: Double): Double
+		begin
+          var y := x*x;
+          Result := y
+		end;
+    g.color := RGB(math.RandomRange(1,200),math.RandomRange(1,200),math.RandomRange(1,200));
+    g.min := -10;
+    g.max := 10;
+
+//    test.Graph := g;
+		graphList.Add(g);
+
+    plot_graph;
+
+    var new_pnlEquationPanel := TPanel.Create(frmMain);
+    new_pnlEquationPanel.parent := EquationPanel;
+    Duplicate(pnlEquationFormat, new_pnlEquationPanel);
+    new_pnlEquationPanel.top := new_pnlEquationPanel.Height*equations;
+    inc(Equations);
+
+    var new_btnAdd := TButton.Create(new_pnlEquationPanel);
+    new_btnAdd.parent := new_pnlEquationPanel;
+    Duplicate(btnAdd, new_btnAdd);
+
+    var new_cmbComponent := TComboBox.Create(new_pnlEquationPanel);
+    new_cmbComponent.Parent := new_pnlEquationPanel;
+    new_cmbComponent.Width := cmbComponent.Width;
+    new_cmbComponent.Height := cmbComponent.Height;
+    new_cmbComponent.Left := cmbComponent.left;
+    new_cmbComponent.Top := cmbComponent.top;
+    // make unlock system check
+
+    var new_btnRemove := TButton.Create(frmMain);
+    new_btnRemove.Parent := new_pnlEquationPanel;
+    Duplicate(btnClose, new_btnRemove);
+    new_btnRemove.left := new_pnlEquationPanel.Width - new_btnRemove.width - 20;
+
+
+  	addBtn.top := addBtn.top + new_pnlEquationPanel.Height + 20;
+end;
+
+procedure TfrmMain.destroy_graph_ui;
+begin
+ addBtn.top := addBtn.Top - 80
+end;
+
+
+procedure TfrmMain.Main(Sender: TObject);
+
+begin
+	//
+  AllocConsole;
+  graphList := TList.Create;
+
+  frmMain.WindowState := TWindowState.wsMaximized;
+
+  var W := frmmain.ClientWidth;
+  var H := frmMain.ClientHeight;
+
+	Display.Width := DW;
+	Display.Height := DH;
+
+	Display.Top := 0;
+	Display.Left := W - DW;
+
+	plot_graph;
+
+  EquationPanel := TPanel.Create(frmMain);
+  EquationPanel.parent := frmMain;
+  EquationPanel.top := 0;
+  EquationPanel.left := 0;
+  EquationPanel.Width := W - DW;
+  EquationPanel.Height := H; // creating graph panel
+
+  pnlEquationFormat.Width := EquationPanel.Width;
+  pnlEquationFormat.left := 0;
+
+  addBtn := TButton.Create(frmMain);
+  addBtn.parent := EquationPanel;
+  addBtn.width := EquationPanel.Width - 80;
+  addBtn.Left := (EquationPanel.Width - addBtn.Width) div 2;
+  addBtn.Top := 20;
+  addBtn.Caption := '+';
+  addBtn.OnClick := create_graph_ui
+end;
+
+procedure TfrmMain.plot_graph;
+begin
+  var bmp := TBitmap.Create;
+  bmp.Width := DW;
+  bmp.Height := DH;
+	bmp.Canvas.Pen.Width := 2;
+	bmp.Canvas.Pen.Color := clLtGray;
+
+  bmp.Canvas.PenPos := Point(DW div 2, 0);
+  bmp.Canvas.LineTo(DW div 2, DH);
+
+  bmp.Canvas.PenPos := Point(0, DH div 2);
+  bmp.Canvas.LineTo(DW, DH div 2);
+
+
+
+  for var graph: ^TGraph in graphList do
+  begin
+
+    var graphFunction := graph.func;
+
+    var min := round(graph.min * 100);
+    var max := round(graph.max * 100);
+    var first_point := True;
+    for var i := -1000 to 1000 do
+    begin
+      if (i > min) and (i < max) then
+      begin
+				var dubi := i / 100; // -10 -> 10
+        if (isNan(graphFunction(dubi))) or (isInfinite(graphFunction(dubi))) then Continue;
+
+				bmp.Canvas.Pen.color := Graph.color;
+
+        var xVal, yVal: Double;
+        xVal := (dubi / 20) * DW + DW div 2;
+        yVal := (graphFunction(dubi) / 20) * DW;
+
+        var xScreen, yScreen: Integer;
+        xScreen := round(xVal);
+        yScreen := -round(yVal) + bmp.Height div 2;
+
+        if first_point then bmp.Canvas.MoveTo(xScreen, yScreen)
+        else bmp.Canvas.LineTo(xScreen, yScreen);
+        first_point := False;
+      end;
+    end;
+  end;
+
+
+
+  display.Picture.Bitmap := bmp;
+end;
+
+end.

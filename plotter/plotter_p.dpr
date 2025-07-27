@@ -3,9 +3,10 @@ program plotter_p;
 uses
   Vcl.Forms,
   plotter_u in 'plotter_u.pas' {frmMain},
-  other_u in 'other_u.pas',
+  utils_u in 'utils_u.pas',
   Vcl.Themes,
-  Vcl.Styles;
+  Vcl.Styles,
+  main_menu_u in 'main_menu_u.pas' {Form1};
 
 {$R *.res}
 
@@ -14,5 +15,6 @@ begin
   Application.MainFormOnTaskbar := True;
   TStyleManager.TrySetStyle('Light');
   Application.CreateForm(TfrmMain, frmMain);
+  Application.CreateForm(TForm1, Form1);
   Application.Run;
 end.

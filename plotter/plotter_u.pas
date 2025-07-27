@@ -5,11 +5,34 @@ interface
 uses
 	Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
 	System.Classes, Vcl.Graphics,
-	Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, other_u, Math, Vcl.StdCtrls;
+	Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, utils_u, Math, Vcl.StdCtrls,
+  main_menu_u;
 
 type
 	TfrmMain = class(TForm)
 		Display: TImage;
+    pnlEquationFormat: TPanel;
+    lblBase: TLabel;
+    btnAdd: TButton;
+    cmbComponent: TComboBox;
+    pnlConstant: TPanel;
+    btnCloseConst: TButton;
+    btnSelectConst: TButton;
+    Edit1: TEdit;
+    pnlFunction: TPanel;
+    btnCloseFunction: TButton;
+    btnSelectFunction: TButton;
+    cmbFunction: TComboBox;
+    pnlOperator: TPanel;
+    btnCloseOperator: TButton;
+    btnSelectOperator: TButton;
+    cmbOperator: TComboBox;
+    pnlVariable: TPanel;
+    lblVariable: TLabel;
+    btnCloseVar: TButton;
+    btnSelectVar: TButton;
+    pnlStorage: TPanel;
+    btnClose: TButton;
 		procedure Main(Sender: TObject);
 		procedure plot_graph;
     procedure create_graph_ui(Sender: TObject);
@@ -25,12 +48,10 @@ var
   addBtn: TButton;
   graphList: TList;
   EquationPanel: TPanel;
+  Equations: Integer;
+  DW, DH: Integer;
 
 const
-	W = 1200;
-	H = 800;
-	DW = 900;
-	DH = 800;
   SCALE = 6;
 
 
@@ -43,15 +64,8 @@ type
     func: TFunc<Double, Double>;
     color: TColor;
     min, max: Double;
+    panel: TPanel;
   end;
-
-function clamp(val, min, max: Double): Double;
-begin
-  var clamped: Double;
-  if val > max then Result := max
-  else if val < min then Result := min
-  else Result := val;
-end;
 
 
 procedure TfrmMain.create_graph_ui;
@@ -63,7 +77,7 @@ begin
   var rand := math.RandomRange(-100,100) / 100;
    g.func := function(x: Double): Double
 		begin
-          var y := math.power(abs(x), 2/3) + sqrt(4-x*x) * sin(x*100);
+          var y := sin(x) * rand;
           Result := y
 		end;
     g.color := RGB(math.RandomRange(1,200),math.RandomRange(1,200),math.RandomRange(1,200));
@@ -71,16 +85,56 @@ begin
     g.max := 10;
 
 //    test.Graph := g;
-		graphList.Add(g);
 
+
+
+
+    var new_pnlEquationPanel := TPanel.Create(frmMain);
+    new_pnlEquationPanel.parent := EquationPanel;
+    Duplicate(pnlEquationFormat, new_pnlEquationPanel);
+    new_pnlEquationPanel.top := new_pnlEquationPanel.Height*equations;
+    inc(Equations);
+    new_pnlEquationPanel.Tag := Equations;
+    g.panel := new_pnlEquationPanel;
+
+    var new_btnAdd := TButton.Create(new_pnlEquationPanel);
+    new_btnAdd.parent := new_pnlEquationPanel;
+    Duplicate(btnAdd, new_btnAdd);
+
+    var new_cmbComponent := TComboBox.Create(new_pnlEquationPanel);
+    new_cmbComponent.Parent := new_pnlEquationPanel;
+    new_cmbComponent.Width := cmbComponent.Width;
+    new_cmbComponent.Height := cmbComponent.Height;
+    new_cmbComponent.Left := cmbComponent.left;
+    new_cmbComponent.Top := cmbComponent.top;
+    // make unlock system check
+
+    var new_btnRemove := TButton.Create(frmMain);
+    new_btnRemove.Parent := new_pnlEquationPanel;
+    Duplicate(btnClose, new_btnRemove);
+    new_btnRemove.left := new_pnlEquationPanel.Width - new_btnRemove.width - 20;
+    new_btnRemove.OnClick := destroy_graph_ui;
+
+    graphList.Add(g);
     plot_graph;
-
-//  	addBtn.top := addBtn.top + 80;
+  	addBtn.top := addBtn.top + new_pnlEquationPanel.Height + 20;
 end;
 
-procedure TfrmMain.destroy_graph_ui;
+procedure TfrmMain.destroy_graph_ui(Sender: TObject);
 begin
- addBtn.top := addBtn.Top - 80
+  if Sender is TButton then
+  begin
+    var Panel := (Sender as TButton).Parent;
+    for var graph : ^TGraph in graphlist do
+      begin
+        if graph.Panel = Panel then
+          graphList.Remove(graph);
+
+      end;
+      Panel.Free;
+  end;
+  plot_graph;
+  addBtn.top := addBtn.top - 120
 end;
 
 
@@ -91,8 +145,13 @@ begin
   AllocConsole;
   graphList := TList.Create;
 
-	frmMain.ClientWidth := W;
-	frmMain.ClientHeight := H;
+  frmMain.WindowState := TWindowState.wsMaximized;
+
+  var W := frmmain.ClientWidth;
+  var H := frmMain.ClientHeight;
+
+  DH := frmMain.ClientHeight;
+  DW := 1200;
 
 	Display.Width := DW;
 	Display.Height := DH;
@@ -108,6 +167,9 @@ begin
   EquationPanel.left := 0;
   EquationPanel.Width := W - DW;
   EquationPanel.Height := H; // creating graph panel
+
+  pnlEquationFormat.Width := EquationPanel.Width;
+  pnlEquationFormat.left := 0;
 
   addBtn := TButton.Create(frmMain);
   addBtn.parent := EquationPanel;
