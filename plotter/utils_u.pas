@@ -84,7 +84,12 @@ end;
 
 procedure Duplicate(original, copy: TLabel); overload;
 begin
-
+  copy.Width := original.Width;
+  copy.Height := original.Height;
+  copy.Top := original.Top;
+  copy.Left := original.Left;
+  copy.Caption := original.Caption;
+  copy.Font := original.Font;
 end;
 
 end.

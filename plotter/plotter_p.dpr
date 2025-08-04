@@ -2,7 +2,7 @@ program plotter_p;
 
 uses
   Vcl.Forms,
-  plotter_u in 'plotter_u.pas' {frmMain},
+  main_u in 'main_u.pas' {frmMain},
   utils_u in 'utils_u.pas',
   Vcl.Themes,
   Vcl.Styles,

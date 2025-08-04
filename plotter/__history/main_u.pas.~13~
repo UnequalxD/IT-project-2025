@@ -1,0 +1,335 @@
+unit main_u;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, utils_u, Math,
+  Vcl.StdCtrls,
+  main_menu_u, Threading, System.Generics.Collections;
+
+type
+  TfrmMain = class(TForm)
+    Display: TImage;
+    pnlEquationFormat: TPanel;
+    lblBase: TLabel;
+    btnAdd: TButton;
+    cmbComponent: TComboBox;
+    pnlConstant: TPanel;
+    btnCloseConst: TButton;
+    btnSelectConst: TButton;
+    Edit1: TEdit;
+    pnlFunction: TPanel;
+    btnCloseFunction: TButton;
+    btnSelectFunction: TButton;
+    cmbFunction: TComboBox;
+    pnlOperator: TPanel;
+    btnCloseOperator: TButton;
+    btnSelectOperator: TButton;
+    cmbOperator: TComboBox;
+    pnlVariable: TPanel;
+    lblVariable: TLabel;
+    btnCloseVar: TButton;
+    btnSelectVar: TButton;
+    pnlStorage: TPanel;
+    btnClose: TButton;
+    procedure Main(Sender: TObject);
+    procedure plotGraph;
+    procedure create_graph_ui(Sender: TObject);
+    procedure destroy_graph_ui(Sender: TObject);
+    procedure addComponent(Sender: TObject);
+  private
+    procedure WndProc(var Msg: TMessage); override;
+  public
+    { Public declarations }
+  end;
+
+var
+  frmMain: TfrmMain;
+  addBtn: TButton;
+  graphList: TList;
+  EquationPanel: TPanel;
+  Equations: Integer;
+  iDispWidth, iDispheight: Integer;
+
+const
+  SCALE = 6;
+  WM_BUTTONDESTROY = WM_USER - 1;
+
+implementation
+
+{$R *.dfm}
+
+type
+  TGraph = record
+    func: TFunc<Double, Double>;
+    color: TColor;
+    min, max: Double;
+    panel: TPanel;
+    components: TList<TPanel>;
+    iSelection: Integer;
+  end;
+
+procedure TfrmMain.WndProc(var Msg: TMessage);
+begin
+  if Msg.Msg = WM_BUTTONDESTROY then
+  begin
+    TObject(Msg.WParam).Free;
+    Exit;
+  end;
+  inherited WndProc(Msg);
+end;
+
+procedure TfrmMain.create_graph_ui;
+var
+  Graph: ^TGraph;
+  new_pnlEquationPanel: TPanel;
+  new_btnAdd, new_btnRemove: TButton;
+  new_cmbComponent: TComboBox;
+  new_lblY: TLabel;
+begin
+  New(Graph);
+  Graph.func := function(x: Double): Double
+    var
+      y: Double;
+    begin
+      y := sqrt(1-x*x);
+      Result := y
+    end;
+  Graph.color := RGB(Math.RandomRange(1, 200), Math.RandomRange(1, 200),
+    Math.RandomRange(1, 200));
+  Graph.min := -10;
+  Graph.max := 10;
+
+  // duplicating all of the buttons from the template panel
+  new_pnlEquationPanel := TPanel.Create(frmMain);
+  new_pnlEquationPanel.parent := EquationPanel;
+  Duplicate(pnlEquationFormat, new_pnlEquationPanel);
+  new_pnlEquationPanel.top := new_pnlEquationPanel.Height * Equations;
+  inc(Equations);
+  new_pnlEquationPanel.Tag := Equations;
+  Graph.panel := new_pnlEquationPanel;
+
+  new_btnAdd := TButton.Create(new_pnlEquationPanel);
+  new_btnAdd.parent := new_pnlEquationPanel;
+  Duplicate(btnAdd, new_btnAdd);
+  new_btnAdd.OnClick := addComponent;
+
+  new_cmbComponent := TComboBox.Create(new_pnlEquationPanel);
+  new_cmbComponent.parent := new_pnlEquationPanel;
+  new_cmbComponent.Width := cmbComponent.Width;
+  new_cmbComponent.Height := cmbComponent.Height;
+  new_cmbComponent.Left := cmbComponent.Left;
+  new_cmbComponent.top := cmbComponent.top;
+  new_cmbComponent.Items := cmbComponent.Items;
+  new_cmbComponent.Name := 'Component';
+
+  new_btnRemove := TButton.Create(frmMain);
+  new_btnRemove.parent := new_pnlEquationPanel;
+  Duplicate(btnClose, new_btnRemove);
+  new_btnRemove.Left := new_pnlEquationPanel.Width - new_btnRemove.Width - 20;
+  new_btnRemove.OnClick := destroy_graph_ui;
+
+  new_lblY := TLabel.Create(frmMain);
+  Duplicate(lblBase, new_lblY);
+  new_lblY.parent := new_pnlEquationPanel;
+  // done copying buttons
+
+  Graph.iSelection := 0;
+
+  graphList.Add(Graph);
+  plotGraph;
+  addBtn.top := new_pnlEquationPanel.Height * Equations + 20;
+end;
+
+procedure TfrmMain.destroy_graph_ui(Sender: TObject);
+var
+  pnlParentPanel: TPanel;
+  iPanelHeight: Integer;
+begin
+  if Sender is TButton then
+  begin
+    pnlParentPanel := TPanel((Sender as TButton).parent);
+    iPanelHeight := pnlParentPanel.top;
+    for var Graph: ^TGraph in graphList do
+    begin
+      if Graph.panel = pnlParentPanel then
+      begin
+        graphList.Remove(Graph);
+        break;
+      end;
+    end;
+    for var Graph: ^TGraph in graphList do
+    begin
+      if Graph.panel.top > iPanelHeight then
+        Graph.panel.top := Graph.panel.top - Graph.panel.Height;
+    end;
+    plotGraph;
+    Dec(Equations);
+    addBtn.top := pnlParentPanel.Height * Equations + 20;
+    PostMessage(Handle, WM_BUTTONDESTROY, WParam(pnlParentPanel), 0);
+  end;
+end;
+
+procedure TfrmMain.addComponent(Sender: TObject);
+var
+  pnlParent: TPanel;
+  Graph: ^TGraph;
+  cmbSelection: TComboBox;
+  sSelection: String;
+  new_ComponentPanel: TPanel;
+  new_SelectButton: TButton;
+  new_DeleteButton: TButton;
+  new_EditBox: TEdit;
+  new_ComboBox: TComboBox;
+  new_Label: TLabel;
+begin
+  pnlParent := TPanel((Sender as TButton).parent);
+  for var grph: ^TGraph in graphList do
+  begin
+    if grph.panel = pnlParent then
+    begin
+      Graph := @grph;
+    end;
+  end;
+
+  cmbSelection := TComboBox(pnlParent.FindComponent('Component'));
+  sSelection := cmbSelection.Text;
+
+  if sSelection = 'Variable' then
+  begin
+    new_ComponentPanel := TPanel.Create(frmMain);
+    Duplicate(pnlVariable, new_ComponentPanel);
+    new_ComponentPanel.Parent := pnlParent;
+
+    new_Label := TLabel.Create(frmMain);
+    Duplicate(lblVariable, new_Label);
+    new_Label.Parent := new_ComponentPanel;
+
+    Graph.components.Insert(Graph.iSelection, new_ComponentPanel);
+
+  end
+  else if sSelection = 'Function' then
+  begin
+
+  end
+  else if sSelection = 'Constant' then
+  begin
+
+  end
+  else if sSelection = 'Operator' then
+  begin
+
+  end;
+
+  for var c := 0 to Graph.components.count -1 do
+  begin
+    graph.components[c].Left := 20* c+1
+  end;
+
+
+end;
+
+procedure TfrmMain.Main(Sender: TObject);
+var
+  iCWidth, iCHeight: Integer;
+begin
+  //
+  AllocConsole;
+  graphList := TList.Create;
+
+  frmMain.WindowState := TWindowState.wsMaximized;
+
+  iCWidth := frmMain.ClientWidth;
+
+  iCHeight := frmMain.ClientHeight;
+
+  iDispheight := frmMain.ClientHeight;
+  iDispWidth := 1200;
+
+  Display.Width := iDispWidth;
+  Display.Height := iDispheight;
+
+  Display.top := 0;
+  Display.Left := iCWidth - iDispWidth;
+
+  plotGraph;
+
+  EquationPanel := TPanel.Create(frmMain);
+  EquationPanel.parent := frmMain;
+  EquationPanel.top := 0;
+  EquationPanel.Left := 0;
+  EquationPanel.Width := iCWidth - iDispWidth;
+  EquationPanel.Height := iCHeight; // creating graph storage panel
+
+  pnlEquationFormat.Width := EquationPanel.Width;
+  pnlEquationFormat.Left := 0;
+
+  addBtn := TButton.Create(frmMain);
+  addBtn.parent := EquationPanel;
+  addBtn.Width := EquationPanel.Width - 80;
+  addBtn.Left := (EquationPanel.Width - addBtn.Width) div 2;
+  addBtn.top := 20;
+  addBtn.Caption := '+';
+  addBtn.OnClick := create_graph_ui
+end;
+
+procedure TfrmMain.plotGraph;
+var
+  bmpImage: TBitmap;
+  graphFunction: TFunc<Double, Double>;
+  iMin, iMax, ixScreen, iyScreen: Integer;
+  bFirstPoint: Boolean;
+  dIndex, dxVal, dyVal: Double;
+begin
+  bmpImage := TBitmap.Create;
+  bmpImage.Width := iDispWidth;
+  bmpImage.Height := iDispheight;
+  bmpImage.Canvas.Pen.Width := 2;
+  bmpImage.Canvas.Pen.color := clLtGray;
+
+  bmpImage.Canvas.PenPos := Point(iDispWidth div 2, 0);
+  bmpImage.Canvas.LineTo(iDispWidth div 2, iDispheight);
+
+  bmpImage.Canvas.PenPos := Point(0, iDispheight div 2);
+  bmpImage.Canvas.LineTo(iDispWidth, iDispheight div 2);
+
+  for var Graph: ^TGraph in graphList do
+  begin
+    graphFunction := Graph.func;
+
+    iMin := round(Graph.min * 100);
+    iMax := round(Graph.max * 100);
+    bFirstPoint := True;
+
+    for var i := -1000 to 1000 do
+    begin
+      if (i > iMin) and (i < iMax) then
+      begin
+        dIndex := i / 100; // -10 -> 10
+        if (isNan(graphFunction(dIndex))) or (isInfinite(graphFunction(dIndex)))
+        then
+          Continue;
+
+        bmpImage.Canvas.Pen.color := Graph.color;
+
+        dxVal := (dIndex / 20) * iDispWidth + iDispWidth div 2;
+        dyVal := (graphFunction(dIndex) / 20) * iDispWidth;
+
+        ixScreen := round(dxVal);
+        iyScreen := -round(dyVal) + bmpImage.Height div 2;
+
+        if bFirstPoint then
+          bmpImage.Canvas.MoveTo(ixScreen, iyScreen)
+        else
+          bmpImage.Canvas.LineTo(ixScreen, iyScreen);
+        bFirstPoint := False;
+      end;
+    end;
+  end;
+
+  Display.Picture.Bitmap := bmpImage;
+end;
+
+end.

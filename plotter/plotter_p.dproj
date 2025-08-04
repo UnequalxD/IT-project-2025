@@ -126,7 +126,7 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="plotter_u.pas">
+        <DCCReference Include="main_u.pas">
             <Form>frmMain</Form>
             <FormType>dfm</FormType>
         </DCCReference>

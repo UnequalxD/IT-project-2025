@@ -11,8 +11,13 @@
     <Transaction>2025/05/26 20:05:14.000.618,=D:\My Drive\Delphi\plotter\Unit1.pas</Transaction>
     <Transaction>2025/05/26 20:05:18.000.594,D:\My Drive\Delphi\plotter\other_u.pas=D:\My Drive\Delphi\plotter\Unit1.pas</Transaction>
     <Transaction>2025/07/22 20:22:49.000.474,=D:\My Drive\Delphi\IT-project-2025\plotter\Unit1.pas</Transaction>
-    <Transaction>2025/07/22 20:23:14.000.582,D:\My Drive\Delphi\IT-project-2025\plotter\main_menu_u.dfm=D:\My Drive\Delphi\IT-project-2025\plotter\Unit1.dfm</Transaction>
     <Transaction>2025/07/22 20:23:14.000.582,D:\My Drive\Delphi\IT-project-2025\plotter\main_menu_u.pas=D:\My Drive\Delphi\IT-project-2025\plotter\Unit1.pas</Transaction>
-    <Transaction>2025/07/25 09:08:26.808,G:\My Drive\Delphi\IT-project-2025\plotter\utils_u.pas=G:\My Drive\Delphi\IT-project-2025\plotter\other_u.pas</Transaction>
+    <Transaction>2025/07/22 20:23:14.000.582,D:\My Drive\Delphi\IT-project-2025\plotter\main_menu_u.dfm=D:\My Drive\Delphi\IT-project-2025\plotter\Unit1.dfm</Transaction>
+    <Transaction>2025/07/25 09:08:26.000.808,G:\My Drive\Delphi\IT-project-2025\plotter\utils_u.pas=G:\My Drive\Delphi\IT-project-2025\plotter\other_u.pas</Transaction>
+    <Transaction>2025/07/31 09:22:47.000.495,=G:\My Drive\Delphi\IT-project-2025\plotter\Unit1.pas</Transaction>
+    <Transaction>2025/07/31 09:23:05.000.822,G:\My Drive\Delphi\IT-project-2025\plotter\main_u.pas=G:\My Drive\Delphi\IT-project-2025\plotter\plotter_u.pas</Transaction>
+    <Transaction>2025/07/31 09:23:05.000.822,G:\My Drive\Delphi\IT-project-2025\plotter\main_u.dfm=G:\My Drive\Delphi\IT-project-2025\plotter\plotter_u.dfm</Transaction>
+    <Transaction>2025/07/31 09:23:11.000.523,G:\My Drive\Delphi\IT-project-2025\plotter\plotter_u.pas=G:\My Drive\Delphi\IT-project-2025\plotter\Unit1.pas</Transaction>
+    <Transaction>2025/07/31 09:32:09.000.673,G:\My Drive\Delphi\IT-project-2025\plotter\plotter_u.pas=</Transaction>
   </Transactions>
 </BorlandProject>
