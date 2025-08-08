@@ -6,7 +6,8 @@ uses
   utils_u in 'utils_u.pas',
   Vcl.Themes,
   Vcl.Styles,
-  main_menu_u in 'main_menu_u.pas' {Form1};
+  main_menu_u in 'main_menu_u.pas' {Form1},
+  graph_u in 'graph_u.pas';
 
 {$R *.res}
 

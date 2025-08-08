@@ -1,0 +1,130 @@
+unit graph_u;
+
+interface
+
+uses
+	Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+	System.Classes, Vcl.Graphics,
+	Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, utils_u, Math,
+	Vcl.StdCtrls, System.Generics.Collections;
+
+type
+	TGraph = class
+	private
+		class var FInstances: TList<TGraph>;
+    bmpImage: TBitmap;
+	public
+		Equation: TFunc<Double, Double>;
+		color: TColor;
+		min, max: Double;
+		panel: TPanel;
+		components: TList<TPanel>;
+		iSelection: Integer;
+
+		class procedure Init;
+		class destructor DestroyClass;
+		constructor Create;
+		destructor Destroy; override;
+		class function getInstances: TList<TGraph>;
+    class procedure clear_graph;
+    procedure plot_graph;
+	end;
+
+implementation
+
+{ TGraph }
+
+uses
+  main_u;
+
+class procedure TGraph.clear_graph;
+begin
+  bmpImage := TBitmap.Create;
+  bmpImage.Width := frmMain.iDispWidth;
+  bmpImage.Height := frmMain.iDispheight;
+  bmpImage.Canvas.Pen.Width := 2;
+  bmpImage.Canvas.Pen.color := clLtGray;
+
+  bmpImage.Canvas.PenPos := Point(frmMain.iDispWidth div 2, 0);
+  bmpImage.Canvas.LineTo(frmMain.iDispWidth div 2, frmMain.iDispheight);
+
+  bmpImage.Canvas.PenPos := Point(0, frmMain.iDispheight div 2);
+  bmpImage.Canvas.LineTo(frmMain.iDispWidth, frmMain.iDispheight div 2);
+  frmMain.Display.Picture.Bitmap := bmpImage;
+end;
+
+constructor TGraph.Create;
+begin
+	inherited;
+	FInstances.Add(Self);
+end;
+
+class procedure TGraph.Init;
+begin
+	FInstances := TList<TGraph>.Create;
+  clear_graph;
+end;
+
+destructor TGraph.Destroy;
+begin
+	FInstances.Remove(Self);
+	inherited;
+end;
+
+class destructor TGraph.DestroyClass;
+begin
+	FInstances.Free;
+end;
+
+class function TGraph.getInstances: TList<TGraph>;
+begin
+	Result := FInstances;
+end;
+
+procedure TGraph.plot_graph;
+var
+  graphFunction: TFunc<Double, Double>;
+  iMin, iMax, ixScreen, iyScreen: Integer;
+  bFirstPoint: Boolean;
+  dIndex, dxVal, dyVal: Double;
+begin
+  graphFunction := Self.Equation;
+
+  iMin := round(Self.min * 100);
+  iMax := round(Self.max * 100);
+  bFirstPoint := True;
+
+
+  for var i := -1000 to 1000 do
+  begin
+    if (i > iMin) and (i < iMax) then
+    begin
+      dIndex := i / 100; // -10 -> 10
+      if (isNan(graphFunction(dIndex))) or (isInfinite(graphFunction(dIndex)))
+      then
+        Continue;
+
+      bmpImage.Canvas.Pen.color := Self.color;
+
+      dxVal := (dIndex / 20) * frmMain.iDispWidth + frmMain.iDispWidth div 2;
+      dyVal := (graphFunction(dIndex) / 20) * frmMain.iDispWidth;
+
+      ixScreen := round(dxVal);
+      iyScreen := -round(dyVal) + bmpImage.Height div 2;
+
+      if bFirstPoint then
+        bmpImage.Canvas.MoveTo(ixScreen, iyScreen)
+      else
+        bmpImage.Canvas.LineTo(ixScreen, iyScreen);
+      bFirstPoint := False;
+    end;
+  end;
+
+	frmMain.Display.Picture.Bitmap := bmpImage;
+end;
+
+end.
+mpImage;
+end;
+
+end.
